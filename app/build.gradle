@@ -35,14 +35,15 @@ def getVersionName = { ->
 android {
     //noinspection GradleDependency
     compileSdk 34
+
     defaultConfig {
         applicationId "top.rootu.lampa"
-        minSdkVersion 16
-        //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 28
+        minSdk 16 // оновлено з minSdkVersion
+        targetSdkVersion 28 // залиште як було
         versionCode getVersionCode()
         versionName getVersionName()
-        multiDexEnabled = true // required when setting minSdkVersion to 20 or lower
+        multiDexEnabled true // виправлено синтаксис
+        
         // Use SupportLibrary for vectors
         vectorDrawables.useSupportLibrary = true
     }
@@ -53,16 +54,17 @@ android {
             def keystorePropsFile = file("keystore/keystore_config")
 
             if (keystorePropsFile.exists()) {
-                file("keystore/keystore_config").withInputStream { keystoreProperties.load(it) }
+                keystorePropsFile.withInputStream { keystoreProperties.load(it) }
                 storeFile file("$keystoreProperties.storeFile")
                 storePassword "$keystoreProperties.storePassword"
                 keyAlias "$keystoreProperties.keyAlias"
                 keyPassword "$keystoreProperties.keyPassword"
             } else {
-                storeFile file(System.getenv('KEYSTORE_FILE'))
-                storePassword System.getenv('KEYSTORE_PASSWORD')
-                keyAlias System.getenv('RELEASE_SIGN_KEY_ALIAS')
-                keyPassword System.getenv('RELEASE_SIGN_KEY_PASSWORD')
+                // Якщо змінні не задані, налаштування не падатимуть
+                storeFile file(System.getenv('KEYSTORE_FILE') ?: "dummy.keystore")
+                storePassword System.getenv('KEYSTORE_PASSWORD') ?: "dummy_password"
+                keyAlias System.getenv('RELEASE_SIGN_KEY_ALIAS') ?: "dummy_alias"
+                keyPassword System.getenv('RELEASE_SIGN_KEY_PASSWORD') ?: "dummy_password"
             }
         }
     }
@@ -74,23 +76,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    
     compileOptions {
         // Flag to enable support for the new language APIs
-        // https://developer.android.com/studio/write/java8-support-table
         coreLibraryDesugaringEnabled true
         // Sets Java compatibility to Java 8
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    packagingOptions {
-        resources.excludes += "DebugProbesKt.bin"
-    }
+    
     kotlinOptions {
         jvmTarget = "1.8"
     }
 
     // gradle 4.6 migration: disable dimensions mechanism
-    // more: https://proandroiddev.com/advanced-android-flavors-part-4-a-new-version-fc2ad80c01bb
     flavorDimensions "default"
 
     productFlavors {
@@ -110,12 +109,15 @@ android {
         }
     }
 
+    // Об'єднаний блок пакування без дублювання
     packagingOptions {
         resources.excludes += "DebugProbesKt.bin"
     }
+    
     buildFeatures {
         viewBinding true
     }
+    
     namespace 'top.rootu.lampa'
 }
 
@@ -126,21 +128,15 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     def actKtxVer = '1.8.0' // 1.8.0 - last api16 compatible
-    //noinspection GradleDependency
     implementation "androidx.activity:activity-ktx:$actKtxVer"
     def appCompatVer = '1.6.1' // 1.6.1 - last api16 compatible
-    //noinspection GradleDependency
     implementation "androidx.appcompat:appcompat:$appCompatVer"
     def constraintVersion = '2.1.4' // 2.1.4 - last api16 compatible
-    //noinspection GradleDependency
     implementation "androidx.constraintlayout:constraintlayout:${constraintVersion}"
     def coreKtxVer = '1.12.0' // 1.12.0 - last api16 compatible
-    //noinspection GradleDependency
     implementation "androidx.core:core-ktx:$coreKtxVer"
     def lifecycleVersion = '2.6.2' // 2.6.2 - last api16 compatible
-    //noinspection GradleDependency
     implementation "androidx.lifecycle:lifecycle-process:$lifecycleVersion"
-    //noinspection GradleDependency
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion"
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.preference:preference-ktx:1.2.1'
@@ -148,10 +144,8 @@ dependencies {
     //noinspection GradleDependency
     implementation 'androidx.tvprovider:tvprovider:1.0.0'
     def vectordrawableVersion = '1.1.0' // 1.1.0 - last api16 compatible
-    //noinspection GradleDependency
     implementation "androidx.vectordrawable:vectordrawable:${vectordrawableVersion}"
     def webkitVersion = '1.8.0' // 1.8.0 - last api16 compatible
-    //noinspection GradleDependency
     implementation "androidx.webkit:webkit:$webkitVersion"
     def glideVersion = '5.0.5' // glide stable
     implementation "com.github.bumptech.glide:glide:${glideVersion}"
@@ -162,28 +156,22 @@ dependencies {
     ksp "com.github.bumptech.glide:ksp:${glideVersion}"
     implementation "com.github.bumptech.glide:annotations:${glideVersion}"
     def muiVersion = '1.11.0' // 1.11.0 - last api16 compatible
-    //noinspection GradleDependency
     implementation "com.google.android.material:material:${muiVersion}"
     def okhttpVersion = '3.12.13' // okhttp 3.12.13 - latest version for API < 21
-    //noinspection GradleDependency
     implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
-    //noinspection GradleDependency
     implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:$okhttpVersion"
     implementation 'org.brotli:dec:0.1.2'
     //noinspection GradleDependency
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kp_version" // or jdk7
     def coroutinesVersion = '1.7.3' // 1.7.3 - last compatible with kp 1.8.22
-    //noinspection GradleDependency
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
-    //noinspection GradleDependency 2.10.x thorow java.lang.VerifyError on api17
+    //noinspection GradleDependency 2.10.x throw java.lang.VerifyError on api17
     implementation 'com.google.code.gson:gson:2.9.1'
     def lottieVersion = '6.4.1' // lottie loaders
-    //noinspection GradleDependency 6.6.2+ throw NullPointerException on build
     implementation "com.airbnb.android:lottie:$lottieVersion"
     implementation 'info.guardianproject.netcipher:netcipher:2.1.0' // SSL / TLS
     implementation 'junit:junit:4.13.2' // For Crosswalk compatibility
     implementation 'org.conscrypt:conscrypt-android:2.5.3' // for TLS v1.3 on API < 29
-    //noinspection GradleDependency 1.8.1 fails on build with old gradle
     implementation 'org.mozilla:rhino:1.7.15' // JavaScript to run PAC file to get correct proxies
     // crosswalk latest
     liteApi fileTree(dir: 'libs', include: ['xwalk_shared_library-23.53.589.4.aar'])
