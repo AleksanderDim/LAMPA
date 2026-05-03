@@ -10,7 +10,6 @@ jobs:
     
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
     - name: Checkout code
@@ -29,7 +28,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assembleDebug
 
-    - name: Upload any APK
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
